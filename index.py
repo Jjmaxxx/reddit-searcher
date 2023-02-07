@@ -13,28 +13,14 @@ prefs = {"profile.default_content_setting_values.notifications" : 2}
 options.add_experimental_option("prefs",prefs)
 driver = webdriver.Chrome(service=service,options=options)
 driver.get("https://www.reddit.com/")
+wordsDict = {}
 
 search = driver.find_element(By.ID,"header-search-bar")
 search.send_keys(playerInput)
 search.send_keys(Keys.RETURN)
 
-# class Post:
-#     def __init__(this,title,upvotes):
-#         this.title = title
-#         this.upvotes = upvotes
 #wait for element to exist before searching if it exists
 try:
-    # main = WebDriverWait(driver,10).until(
-    #     EC.presence_of_element_located((By.CSS_SELECTOR,"div[data-testid='posts-list']"))
-    # )
-    # print(main)
-    # posts = WebDriverWait(driver,10).until(
-    #     EC.presence_of_all_elements_located((By.CSS_SELECTOR,"div[data-testid='post-title']"))
-    # )
-    # for post in allPosts:
-    #         writer.writerow([post.title,post.upvotes])
-            # print("Post Title: " + post.title)
-            # print("Upvotes: " + post.upvotes)
     with open('redditPosts.csv','w', encoding="utf-8") as file:
         writer = csv.writer(file)
         
@@ -44,26 +30,42 @@ try:
                 EC.presence_of_all_elements_located((By.CSS_SELECTOR,"div[data-testid='post-container']"))
             )
             for post in posts:
-                postTitle = post.find_element(By.CSS_SELECTOR,"div[data-testid='post-title']")
-                title = postTitle.find_element(By.TAG_NAME,"h3")
                 upvotes = post.find_element(By.CLASS_NAME,"_vaFo96phV6L5Hltvwcox").text
                 findK =upvotes.find("k")
                 if(findK!= -1):
                     upvotes = int(float(upvotes[0:findK]) * 1000)
-                    print(upvotes)
                 else:
                     upvotes=upvotes[0:upvotes.find(" ")]
-                writer.writerow([title.text,upvotes])
-                # newPost = Post(title.text,upvotes.text)
-                # allPosts.append(newPost)
-            # print(postTitles)
+                postTitle = post.find_element(By.CSS_SELECTOR,"div[data-testid='post-title']")
+                title = postTitle.find_element(By.TAG_NAME,"h3").text
+                #if _2c1ElNxHftd8W_nZtcG9zf _33Pa96SGhFVpZeI6a7Y_Pl _2r9BZFotuBbLYnijAaskeZ class name exists, then theres a picture/video
+                #check if paragraph class exists when clicked 
+                # post.click()
+                # postContent = WebDriverWait(driver,10).until(
+                #     EC.presence_of_element_located((By.CSS_SELECTOR,"div[data-testid='post-content']"))
+                # )
+                # content = postContent.text
+                # driver.find_element(By.TAG_NAME,"body").send_keys(Keys.ESCAPE)
+                # title = title + " " + content
+                words = title.split()
+                for word in words:
+                    word = word.lower()
+                    if any(not char.isalnum() for char in word):
+                        continue                    
+                    if word in wordsDict:
+                        wordsDict[word]+=1
+                    else:
+                        wordsDict[word]=1
+                    #print(word+ ": "+str(wordsDict[word]))
+
+                writer.writerow([title,upvotes])
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #print("length: " + str(len(allPosts)))
+    with open('wordFrequency.csv','w', encoding="utf-8") as file:
+        writer = csv.writer(file)
+        
+        for word in wordsDict:
+            writer.writerow([word,wordsDict[word]])
+    print("done")
 except Exception as e:
     print(e)
     driver.quit()
-# main = driver.find_element(By.ID,"posts-list")
-
-
-while(True):
-    pass
